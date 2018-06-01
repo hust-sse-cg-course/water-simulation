@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Plane.h"
+#include "Water.h"
 
 int screen_width = 1280;
 int screen_height = 720;
@@ -49,15 +50,16 @@ int main(int argc, char const *argv[])
 
     glfwSetCursorPosCallback(window, mouse_callback);
 
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-	glEnable(GL_BLEND);
+	//glEnable(GL_CULL_FACE);
+	//glEnable(GL_BLEND);
 
 	// init ////////////////
     camera_pos = calc_camera_position();
-	Plane p(200);
+    Water water;
+	Plane p(50);
 	Shader shader("res/shader/water_mesh.vs", "res/shader/water_mesh.fs");
+    Shader debug_normal_shader("res/shader/water_mesh.vs", "res/shader/debug_normal.gs", "res/shader/debug_normal.fs");
+    int timer = 0;
 
 	while(!glfwWindowShouldClose(window)) {
         process_input(window);
@@ -66,13 +68,37 @@ int main(int argc, char const *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// update
+        if (timer >= 30) {
+            water.addDrop(0, 0.1, 0.03, 0.05);
+            water.addDrop(0, -0.1, 0.03, 0.05);
+            timer = 0;
+        }
+        else timer++;
+
+        water.update();
+        water.updateNormals();
+
         shader.use();
         shader.setMat4("model", glm::mat4(1.0f));
         shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
         shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+        water.getInfoTexture()->bind();
+        shader.setInt("info_texture", 0);
 
 		//draw
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glEnable(GL_DEPTH_TEST);
 		p.draw(&shader);
+        glDisable(GL_DEPTH_TEST);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+        debug_normal_shader.use();
+        debug_normal_shader.setMat4("model", glm::mat4(1.0f));
+        debug_normal_shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
+        debug_normal_shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+        water.getInfoTexture()->bind();
+        debug_normal_shader.setInt("info_texture", 0);
+        p.draw(&debug_normal_shader);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
