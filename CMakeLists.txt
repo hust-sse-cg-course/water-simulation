@@ -31,7 +31,8 @@ file(GLOB EXTERNAL_SOURCES external/glad/src/glad.c
 file(GLOB PROJECT_HEADERS include/*.h)
 file(GLOB PROJECT_SOURCES src/*.cpp)
 file(GLOB PROJECT_SHADERS res/shader/*.vs
-                          res/shader/*.fs)
+                          res/shader/*.fs
+                          res/shader/*.gs)
 
 source_group("Headers" FILES ${PROJECT_HEADERS})
 source_group("Sources" FILES ${PROJECT_SOURCES})
