@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "Plane.h"
+#include "Cube.h"
 #include "Water.h"
 
 int screen_width = 1280;
@@ -57,9 +58,14 @@ int main(int argc, char const *argv[])
     camera_pos = calc_camera_position();
     Water water;
 	Plane p(50);
+	Cube cube;
 	Shader shader("res/shader/water_mesh.vs", "res/shader/water_mesh.fs");
-    Shader debug_normal_shader("res/shader/water_mesh.vs", "res/shader/debug_normal.gs", "res/shader/debug_normal.fs");
+	Shader cubeshader("res/shader/cubeshader.vs", "res/shader/cubeshader.fs");
     int timer = 0;
+	Texture texTile("res/texture/tiles.jpg","tile");
+	Texture texA(256, 256);
+	Texture texB(256, 256);
+	Texture texCaustic(1024, 1024);
 
 	while(!glfwWindowShouldClose(window)) {
         process_input(window);
@@ -78,27 +84,43 @@ int main(int argc, char const *argv[])
         water.update();
         water.updateNormals();
 
-        shader.use();
-        shader.setMat4("model", glm::mat4(1.0f));
-        shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
-        shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
-        water.getInfoTexture()->bind();
-        shader.setInt("info_texture", 0);
 
-		//draw
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        glEnable(GL_DEPTH_TEST);
-		p.draw(&shader);
-        glDisable(GL_DEPTH_TEST);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		{	//renderCube
+			glEnable(GL_CULL_FACE);
+			texTile.bind(0);
+			texA.bind(1);
+			texCaustic.bind(2);
+			cubeshader.setInt("tiles", 0);
+			cubeshader.setInt("water", 1);
+			cubeshader.setInt("causticTex",2);
+			cubeshader.setVec3("light", camera_pos);
+			cubeshader.setVec3("sphereCenter", glm::vec3(-0.4, -0.75, 0.2));
+			cubeshader.setFloat("sphereRadius",0.25);
+			shader.setMat4("model", glm::mat4(1.0f));
+			shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
+			shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+			cube.draw(&cubeshader);
+			glDisable(GL_CULL_FACE);
 
-        debug_normal_shader.use();
-        debug_normal_shader.setMat4("model", glm::mat4(1.0f));
-        debug_normal_shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
-        debug_normal_shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
-        water.getInfoTexture()->bind();
-        debug_normal_shader.setInt("info_texture", 0);
-        p.draw(&debug_normal_shader);
+		}
+
+
+
+
+
+        //shader.use();
+        //shader.setMat4("model", glm::mat4(1.0f));
+        //shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
+        //shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+        //water.getInfoTexture()->bind();
+        //shader.setInt("info_texture", 0);
+		//
+		////draw
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glEnable(GL_DEPTH_TEST);
+		//p.draw(&shader);
+        //glDisable(GL_DEPTH_TEST);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
