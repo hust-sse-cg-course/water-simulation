@@ -8,12 +8,12 @@
 #include "Plane.h"
 #include "Water.h"
 
-int screen_width = 1280;
-int screen_height = 720;
+int screen_width = 1600;
+int screen_height = 900;
 bool direction_lock = true;
 glm::vec3 camera_pos;
-float angle_phi = 0.0f;
-float angle_theta = 45.0f;
+float angle_phi = 0;
+float angle_theta = 10;
 double last_mouse_x, last_mouse_y;
 bool first_mouse = true;
 
@@ -23,6 +23,8 @@ glm::vec3 calc_camera_position();
 void process_input(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
+glm::vec3 lightdir = glm::normalize(glm::vec3(2, 2, -1));
+
 int main(int argc, char const *argv[])
 {
 	glfwInit();
@@ -31,7 +33,7 @@ int main(int argc, char const *argv[])
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
+	
 	// Create window
 	auto window = glfwCreateWindow(screen_width, screen_height, "Water", nullptr, nullptr);
 
@@ -50,25 +52,28 @@ int main(int argc, char const *argv[])
 	glViewport(0, 0, screen_width, screen_height);
 
 	glfwSetCursorPosCallback(window, mouse_callback);
-
+	glfwWindowHint(GLFW_SAMPLES, 4);
+	glEnable(GL_MULTISAMPLE);
 	//glEnable(GL_CULL_FACE);
 	//glEnable(GL_BLEND);
 
 	// init ////////////////
 	camera_pos = calc_camera_position();
 	Water water;
-	Plane p(50);
+	Plane p(200);
 	Shader shader("res/shader/water_mesh.vs", "res/shader/water_mesh.fs");
-	Texture texTiles("res/texture/tiles.jpg", "text2d");
+	Texture texTiles("res/texture/tiles.jpg");
 	texTiles.bind(1);
 	//Shader debug_normal_shader("res/shader/water_mesh.vs", "res/shader/debug_normal.gs", "res/shader/debug_normal.fs");
 	int timer = 0;
 	
-	for (int i = 0; i < 20; i++) {
-		water.addDrop((1.0f * rand()/ 0x7fff) * 2 - 1, (1.0f * rand() / 0x7fff) * 2 - 1, 0.03, (i & 1) ? 0.01 : -0.01);
+	for (int i = 0; i < 24; i++) {
+		//water.addDrop((1.0f * rand()/ 0x7fff) * 2 - 1, (1.0f * rand() / 0x7fff) * 2 - 1, 0.03, (i & 1) ? 0.5 : -0.11);
 	}
 
-	//water.addDrop(0, 0, 0.05, 0.8);
+	water.addDrop(0, 0, 0.05, 0.5);
+
+	float last_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
 		process_input(window);
 
@@ -85,19 +90,21 @@ int main(int argc, char const *argv[])
 
 		water.update();
 		water.updateNormals();
+		water.updateCaustic(lightdir,p);
 
 		shader.use();
 		shader.setMat4("model", glm::mat4(1.0f));
 		shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
 		shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
-		water.getInfoTexture()->bind();
+		water.getInfoTexture()->bind(0);	
+		water.getCausticTexture()->bind(2);
 		shader.setInt("water", 0);
-		shader.setVec3("light", glm::vec3(2, 2, -1));
+		shader.setVec3("light", lightdir);
 		shader.setInt("tiles", 1);
-		//shader.setInt("causticTex", 2);
+		shader.setInt("causticTex", 2);
 		shader.setVec3("eye", camera_pos);
-
-
+		
+		
 		//draw
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glEnable(GL_DEPTH_TEST);
@@ -112,7 +119,9 @@ int main(int argc, char const *argv[])
 		//water.getInfoTexture()->bind();
 		//debug_normal_shader.setInt("info_texture", 0);
 		//p.draw(&debug_normal_shader);
-
+		float current_time = glfwGetTime();
+		printf("%f\n", (current_time - last_time)*1000);
+		last_time = current_time;
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -131,6 +140,10 @@ void process_input(GLFWwindow* window) {
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		direction_lock = true;
 		first_mouse = true;
+	}
+	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+	{
+		lightdir = glm::normalize(calc_camera_position());
 	}
 }
 

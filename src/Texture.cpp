@@ -1,11 +1,7 @@
 #include "Texture.h"
 
-Texture::Texture(std::string filepath, std::string type) :
-    Texture(filepath, type, Texture::WrapType::Repeat)
-{
-}
-
-Texture::Texture(std::string filepath, std::string type, WrapType wraptype) : mType(type), mPath(filepath) {
+Texture::Texture(std::string filepath, WrapType wraptype, GLenum type) 
+	: mType(type), mPath(filepath) {
     glGenTextures(1, &mTex);
 
     int width, height, nrChannels;

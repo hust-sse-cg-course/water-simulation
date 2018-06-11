@@ -18,8 +18,7 @@ public:
     };
 
     Texture(int width, int height);
-    Texture(std::string filepath, std::string type);
-    Texture(std::string filepath, std::string type, WrapType wraptype);
+    Texture(std::string filepath, WrapType wraptype = WrapType::Repeat, GLenum type = GL_UNSIGNED_BYTE);
 
     void drawTo(std::function<void()> callback);
     void bind(unsigned int idx = 0);
@@ -28,7 +27,7 @@ public:
         return mTex;
     }
 
-    inline std::string getName() {
+    inline GLenum getType() {
         return mType;
     }
 
@@ -39,7 +38,7 @@ public:
     GLuint mTex;
     GLuint mFBO = 0, mRBO = 0;
     int mWidth, mHeight;
-    std::string mType;
+	GLenum mType;
     std::string mPath;
 };
 

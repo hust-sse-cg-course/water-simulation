@@ -10,7 +10,7 @@ const float poolHeight = 1.0;
 uniform vec3 light;
 uniform sampler2D water; 
 uniform sampler2D tiles; 
-//uniform sampler2D causticTex;
+uniform sampler2D causticTex;
 uniform vec3 eye;
 
 in vec3 position;
@@ -53,7 +53,7 @@ vec3 getWallColor(vec3 point)
 	vec4 info = texture2D(water, point.xz * 0.5 + 0.5); 
 	if (point.y < info.r) 
 	{
-		vec4 caustic = vec4(0,0,0,1);//texture2D(causticTex, 0.75 * (point.xz - point.y * refractedLight.xz / refractedLight.y) * 0.5 + 0.5);
+		vec4 caustic = texture2D(causticTex, 0.75 * (point.xz - point.y * refractedLight.xz / refractedLight.y) * 0.5 + 0.5);
 		scale += diffuse * caustic.r * 2.0 * caustic.g;
 	} 
 	else 
@@ -90,7 +90,7 @@ vec3 getSurfaceRayColor(vec3 origin, vec3 ray, vec3 waterColor)
 	} 
 	return color;
 } 
-
+in vec4 temp;
 void main() 
 { 
 	vec2 coord = position.xz * 0.5 + 0.5;
@@ -101,6 +101,7 @@ void main()
 		coord += info.ba * 0.005;
 		info = texture2D(water, coord);
 	} 
+
 	vec3 normal = vec3(info.b, sqrt(1.0 - dot(info.ba, info.ba)), info.a);
 	vec3 incomingRay = normalize(position - eye);
 	

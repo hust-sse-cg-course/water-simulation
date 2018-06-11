@@ -55,7 +55,7 @@ Plane::Plane(int details) {
 
 void Plane::draw(Shader *shader) {
     shader->use();
-
+	glClear(GL_COLOR_BUFFER_BIT);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
