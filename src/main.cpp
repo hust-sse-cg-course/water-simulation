@@ -6,6 +6,7 @@
 #include <math.h>
 
 #include "Plane.h"
+#include "Cube.h"
 #include "Water.h"
 
 int screen_width = 1600;
@@ -54,24 +55,25 @@ int main(int argc, char const *argv[])
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 	glEnable(GL_MULTISAMPLE);
-	//glEnable(GL_CULL_FACE);
-	//glEnable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glCullFace(GL_FRONT);
 
-	// init ////////////////
 	camera_pos = calc_camera_position();
 	Water water;
-	Plane p(200);
-	Shader shader("res/shader/water_mesh.vs", "res/shader/water_mesh.fs");
+	Plane p(256); Cube cube;
+	Shader waterShader("res/shader/water_mesh.vs", "res/shader/water_mesh.fs");
+	Shader cubeshader("res/shader/cube.vs", "res/shader/cube.fs");
 	Texture texTiles("res/texture/tiles.jpg");
 	texTiles.bind(1);
 	//Shader debug_normal_shader("res/shader/water_mesh.vs", "res/shader/debug_normal.gs", "res/shader/debug_normal.fs");
 	int timer = 0;
 	
 	for (int i = 0; i < 24; i++) {
-		//water.addDrop((1.0f * rand()/ 0x7fff) * 2 - 1, (1.0f * rand() / 0x7fff) * 2 - 1, 0.03, (i & 1) ? 0.5 : -0.11);
+		water.addDrop((1.0f * rand()/ 0x7fff) * 2 - 1, (1.0f * rand() / 0x7fff) * 2 - 1, 0.03, (i & 1) ? 0.5 : -0.11);
 	}
 
-	water.addDrop(0, 0, 0.05, 0.5);
+	//water.addDrop(0, 0, 0.05, 0.5);
 
 	float last_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
@@ -92,25 +94,36 @@ int main(int argc, char const *argv[])
 		water.updateNormals();
 		water.updateCaustic(lightdir,p);
 
-		shader.use();
-		shader.setMat4("model", glm::mat4(1.0f));
-		shader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
-		shader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+		waterShader.use();
+		waterShader.setMat4("model", glm::mat4(1.0f));
+		waterShader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
+		waterShader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
 		water.getInfoTexture()->bind(0);	
 		water.getCausticTexture()->bind(2);
-		shader.setInt("water", 0);
-		shader.setVec3("light", lightdir);
-		shader.setInt("tiles", 1);
-		shader.setInt("causticTex", 2);
-		shader.setVec3("eye", camera_pos);
+		waterShader.setInt("water", 0);
+		waterShader.setVec3("light", lightdir);
+		waterShader.setInt("tiles", 1);
+		waterShader.setInt("causticTex", 2);
+		waterShader.setVec3("eye", camera_pos);
 		
 		
 		//draw
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glEnable(GL_DEPTH_TEST);
-		p.draw(&shader);
-		glDisable(GL_DEPTH_TEST);
+		glDisable(GL_CULL_FACE);
+		p.draw(&waterShader);
 		//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+		cubeshader.use();
+		cubeshader.setMat4("model", glm::translate(glm::mat4(1.0), glm::vec3(0, 0.15f, 0)));
+		cubeshader.setMat4("view", glm::lookAt(camera_pos, glm::vec3(0), glm::vec3(0, 1, 0)));
+		cubeshader.setMat4("projection", glm::perspective(glm::radians(45.0f), (float)screen_width / screen_height, 0.1f, 100.0f));
+		cubeshader.setInt("water", 0);
+		cubeshader.setInt("tiles", 1);
+		cubeshader.setInt("causticTex", 2);
+		cubeshader.setVec3("light", lightdir);
+		glEnable(GL_CULL_FACE);
+		cube.draw(&cubeshader);
+
 
 		//debug_normal_shader.use();
 		//debug_normal_shader.setMat4("model", glm::mat4(1.0f));

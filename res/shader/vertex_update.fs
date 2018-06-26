@@ -21,5 +21,10 @@ void main() {
     info.g *= 0.995;
     info.r += info.g;
 
+
+    vec3 dx2 = vec3(delta.x, texture2D(texture, vec2(Coords.x + delta.x, Coords.y)).r - info.r, 0.0);
+    vec3 dy2 = vec3(0.0, texture2D(texture, vec2(Coords.x, Coords.y + delta.y)).r - info.r, delta.y);
+    info.ba = normalize(cross(dy2, dx2)).xz;
+
     FragColor = info;
 }

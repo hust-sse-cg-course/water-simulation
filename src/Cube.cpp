@@ -1,7 +1,4 @@
 #include "Cube.h"
-
-
-
 Cube::Cube()
 {
 	glGenVertexArrays(1, &VAO);
@@ -24,15 +21,10 @@ Cube::Cube()
 
 }
 
-
-Cube::~Cube()
-{
-}
-
 void Cube::draw(Shader *shader)
 {
 	shader->use();
 	glBindVertexArray(VAO);
-	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDrawArrays(GL_TRIANGLES, 0, 30);
 	glBindVertexArray(0);
 }

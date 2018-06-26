@@ -96,7 +96,7 @@ void main()
 	vec2 coord = position.xz * 0.5 + 0.5;
 	vec4 info = texture2D(water, coord);
 	/* make water look more "peaked" */ 
-	for (int i = 0; i < 5; i++) 
+	for (int i = 0; i < 1; i++) 
 	{
 		coord += info.ba * 0.005;
 		info = texture2D(water, coord);
